@@ -1,0 +1,70 @@
+/*
+ * Description:
+ * Dual LED blinker with switch interrupt control
+ * LED1: Regular timed blinking (500ms period)
+ * LED4: Toggle on rising edge of switch input (p21)
+ * Demonstrates interrupt handling + non-blocking main loop
+ */
+
+#include "mbed.h"
+
+/* 
+ * Constants and Hardware Setup:
+ * BLINKING_RATE: 500ms toggle period for LED1 (chrono literal)
+ * LED1: Main loop controlled (built-in LED, typically PA_5)
+ * LED4: Interrupt-driven (built-in LED, platform-specific)
+ * p21: External switch input (pull-up assumed, rising edge trigger)
+ */
+#define BLINKING_RATE 500ms
+
+DigitalOut otherled(LED4);
+InterruptIn sw(p21);   // Switch on p21, interrupt on rising edge
+
+/* 
+ * Busy-wait delay function using hardware Timer
+ * Blocks execution for specified seconds (software timing reference)
+ * Uses deprecated timer.read() - consider ThisThread::sleep_for() for production
+ */
+void mywait(float seconds)
+{
+    Timer timer;
+
+    timer.reset();
+    timer.start();
+    while (timer.read() < seconds) {
+        // busy wait loop
+    }
+    timer.stop();
+}
+
+/* 
+ * Interrupt Service Routine (ISR)
+ * Toggles LED4 state on switch press (rising edge)
+ * Non-blocking, atomic operation (safe for ISR context)
+ */
+void blink()
+{
+    otherled = !otherled;
+}
+
+/* 
+ * Main loop: Continuous LED1 blinking + interrupt monitoring
+ * LED1 toggles every 500ms (ThisThread::sleep_for)
+ * Additional 250ms mywait() delay creates ~750ms effective period
+ * Interrupt on p21 controls LED4 independently
+ */
+int main()
+{
+    // Initialise main LED as output
+    DigitalOut led(LED1);
+
+    // Attach interrupt callback to rising edge of switch
+    sw.rise(blink);
+    // sw.fall(blink);  // Uncomment for both edges
+
+    while (true) {
+        led = !led;
+        ThisThread::sleep_for(BLINKING_RATE);
+        mywait(0.25);  // Additional software delay
+    }
+}
