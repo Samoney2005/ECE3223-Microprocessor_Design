@@ -1,0 +1,127 @@
+#include "mbed.h"
+
+// =======================
+// I/O DECLARATIONS
+// =======================
+
+// 4 on-board blue LEDs (treat as active-high: 1 = ON, 0 = OFF)
+DigitalOut blue1(LED1);
+DigitalOut blue2(LED2);
+DigitalOut blue3(LED3);
+DigitalOut blue4(LED4);
+
+// 4 external green LEDs on breadboard 
+DigitalOut green1(p17);
+DigitalOut green2(p18);
+DigitalOut green3(p23);
+DigitalOut green4(p24);
+
+// Switch on p20: controls BLUE LEDs, configured active-high with PullDown
+DigitalIn sw_blue(p20);    // switch 1 
+// Switch on p21: controls GREEN LEDs, configured active-low with PullUp
+DigitalIn sw_green(p21);   // switch 2 
+
+// Counts of how many LEDs of each color are ON (0–4)
+int blue_count  = 0;
+int green_count = 0;
+
+// =======================
+// HELPER FUNCTIONS
+// =======================
+
+// Update blue LEDs to match blue_count (0–4)
+void update_blue() {
+    blue1 = (blue_count >= 1) ? 1 : 0;
+    blue2 = (blue_count >= 2) ? 1 : 0;
+    blue3 = (blue_count >= 3) ? 1 : 0;
+    blue4 = (blue_count >= 4) ? 1 : 0;
+}
+
+// Update green LEDs to match green_count (0–4)
+// Assume external greens are active-high: 1 = ON, 0 = OFF.
+void update_green() {
+    green1 = (green_count >= 1) ? 1 : 0;
+    green2 = (green_count >= 2) ? 1 : 0;
+    green3 = (green_count >= 3) ? 1 : 0;
+    green4 = (green_count >= 4) ? 1 : 0;
+}
+
+// =======================
+// MAIN PROGRAM
+// =======================
+
+int main() {
+    // Configure pulls so we have one active-high and one active-low switch
+    sw_blue.mode(PullDown);  // p20: not pressed -> 0, pressed -> 1
+    sw_green.mode(PullUp);   // p21: not pressed -> 1, pressed -> 0
+
+    // Initially, all blue and green LEDs are OFF
+    blue_count  = 0;
+    green_count = 0;
+    update_blue();
+    update_green();
+
+    while (1) {
+        // Normalize switch readings:
+        //  - blue_pressed is true when p20 switch is pressed (active-high) 
+        //  - green_pressed is true when p21 switch is pressed (active-low) 
+        bool blue_pressed  = (sw_blue.read()  == 1);
+        bool green_pressed = (sw_green.read() == 0);
+
+        // =========================================
+        // BOTH SWITCHES PRESSED -> RESET ALL OFF
+        // =========================================
+        if (blue_pressed && green_pressed) {
+            // Reset counts
+            blue_count  = 0;
+            green_count = 0;
+            update_blue();
+            update_green();
+
+            // Wait until both switches are released (full press/release cycle)
+            while ((sw_blue.read() == 1) || (sw_green.read() == 0)) {
+                ThisThread::sleep_for(10ms);
+            }
+            // Debounce small delay
+            ThisThread::sleep_for(20ms);
+        }
+        // ================================
+        // HANDLE BLUE SWITCH (p20)
+        // ================================
+        else if (blue_pressed) {
+            // Increase number of blue LEDs ON if possible 
+            if (blue_count < 4) {
+                blue_count++;
+                update_blue();
+            }
+
+            // Wait for user to release this switch (prevents repeat while held)
+            while (sw_blue.read() == 1) {
+                ThisThread::sleep_for(10ms);
+            }
+            // Debounce Button
+            ThisThread::sleep_for(20ms);
+        }
+        // ================================
+        // HANDLE GREEN SWITCH (p21)
+        // ================================
+        else if (green_pressed) {
+            // Increase number of green LEDs ON if possible 
+            if (green_count < 4) {
+                green_count++;
+                update_green();
+            }
+
+            // Wait for user to release this switch
+            while (sw_green.read() == 0) {
+                ThisThread::sleep_for(10ms);
+            }
+            // Debounce Button
+            ThisThread::sleep_for(20ms);
+        }
+
+        // Small idle delay so loop is not too tight
+        ThisThread::sleep_for(5ms);
+    }
+}
+
