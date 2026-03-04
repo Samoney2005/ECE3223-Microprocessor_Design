@@ -1,0 +1,109 @@
+/*
+ * Description:
+ * Multiple PWM examples for LED control and audio generation using mbed PwmOut
+ * Active: Smooth LED breathing effect via sine-squared modulation
+ * Commented: Alarm tones, siren sweep, discrete LED dimming patterns
+ * All examples demonstrate PWM duty cycle control [0.0, 1.0 range]
+ */
+
+#include "mbed.h"
+
+/*
+ * EXAMPLE 1: Alarm Way 1 (880 Hz square wave on piezo/LED pin p21)
+ * Manual duty cycle toggling with fixed period
+PwmOut led(p21);
+int main()
+{
+    led.period(1/880.);
+    led.write(0.5);
+    while (true) {
+        led.write(0.5);
+        wait_us(250000);
+        led.write(0);
+        wait_us(250000);
+    }
+}
+*/
+
+/*
+ * EXAMPLE 2: Alarm Way 2 (cleaner syntax, same 880 Hz on p21)
+ * Uses assignment operator instead of write()
+PwmOut piezo(p21);
+int main()
+{
+    piezo.period(1/880.);
+    while (true) {
+        piezo = 0.5;
+        wait_us(250000);
+        piezo = 0;
+        wait_us(250000);
+    }
+}
+*/
+
+/*
+ * EXAMPLE 3: Siren Alarm (frequency sweep 500-1000 Hz on p21)
+ * Continuous frequency gliding effect
+PwmOut piezo(p21);
+int main()
+{
+    while (true) {
+        for (int f= 500; f<1000; f+=10){
+            piezo.period(1.0/f);
+            piezo = 0.5;
+            wait_us(250000);
+        }
+    }
+}
+*/
+
+/*
+ * EXAMPLE 4: Discrete LED Dimming (100 Hz, 5 brightness levels)
+ * Stepped brightness: 100% → 50% → 25% → 12.5% → 6.25%
+PwmOut led(LED1);
+int main()
+{   
+    led.period(1/100.);
+    led = 0.5;
+    while (true) {
+        led = 1;
+        wait_us(100000);
+        led = 0.5;
+        wait_us(100000);
+        led = 0.25;
+        wait_us(100000);
+        led = 0.125;
+        wait_us(100000);
+        led = 0.0625;
+        wait_us(100000);
+    }
+}
+*/
+
+/* 
+ * ACTIVE EXAMPLE 5: Smooth LED Breathing (100 Hz PWM carrier)
+ * Sine-squared modulation for flicker-free brightness animation
+ * ~6 second full cycle, modern non-deprecated timing
+ */
+PwmOut led(LED1);
+
+int main()
+{
+    float theta = 0.0f;
+
+    // Set PWM period to 1/100 s = 10 ms (100 Hz carrier)
+    led.period(1.0f / 100.0f);
+
+    while (true) {
+        // duty cycle must be in [0,1]; sin²(theta) always between 0 and 1
+        led = sinf(theta) * sinf(theta);
+
+        // 10 ms delay (modern chrono literal syntax)
+        ThisThread::sleep_for(10ms);
+
+        theta += 0.1f;
+        if (theta > 2.0f * 3.14159265f) {
+            theta -= 2.0f * 3.14159265f; // keep theta bounded
+        }
+    }
+}
