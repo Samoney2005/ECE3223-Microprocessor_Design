@@ -1,9 +1,30 @@
+/*
+ * File: display_float_seven_segment.cpp
+ * 
+ * Description:
+ * This program demonstrates how to display floating-point numbers on an 8-bit
+ * 7-segment display module using the mbed microcontroller platform.
+ */
+
 #include "mbed.h"
 
+/* 
+ * Hardware Setup:
+ * 8-bit BusOut interface connected to 7-segment display segments (a-g + decimal point)
+ * Pins: p5, p6, p7, p8, p9, p10, p11, p12
+ */
 BusOut display(p5, p6, p7, p8, p9, p10, p11, p12);
 
+/* 
+ * Function prototype for 7-segment pattern conversion
+ */
 int segConvert(int symbol);
 
+/* 
+ * Displays integer values by recursively breaking down multi-digit numbers
+ * Handles negative numbers with '-' symbol display
+ * Uses timed delays (500ms per digit, 1s blank) for sequential digit display
+ */
 void displayInt(int n)
 {
     if (n < 0) {
@@ -25,6 +46,11 @@ void displayInt(int n)
     }
 }
 
+/* 
+ * Displays up to 3 decimal digits of fractional component
+ * Shows decimal point first, then extracts digits via integer truncation
+ * Early exit when fractional part reaches zero
+ */
 void displayFrac(float f)
 {
     display = segConvert('.');
@@ -40,6 +66,12 @@ void displayFrac(float f)
     }
 }
 
+/* 
+ * Main floating-point display function with rounding
+ * Applies 0.0005 rounding correction for better decimal accuracy
+ * Splits float into integer + fractional parts, handles negative values
+ * Calls displayInt() and displayFrac() sequentially
+ */
 void displayFloat(float f)
 {
     int i;
@@ -56,6 +88,10 @@ void displayFloat(float f)
     displayFrac(frac);
 }
 
+/* 
+ * Main loop continuously displays 3.14 as demonstration
+ * Infinite loop calls displayFloat() repeatedly
+ */
 int main()
 {
     while (true) {
@@ -63,6 +99,11 @@ int main()
     }
 }
 
+/* 
+ * Converts numeric symbols (0-9) and special characters ('-', '.') 
+ * to 7-segment display binary patterns (common cathode assumed)
+ * Bit mapping: [dp,g,f,e,d,c,b,a] where dp=decimal point
+ */
 int segConvert(int symbol)
 {
     switch (symbol) {
@@ -81,4 +122,3 @@ int segConvert(int symbol)
         default:  return 0;
     }
 }
-
