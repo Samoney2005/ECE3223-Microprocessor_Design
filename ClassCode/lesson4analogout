@@ -1,0 +1,44 @@
+/*
+ * Description:
+ * Generates analog waveforms (square and sine) on DAC output pin p18
+ * Designed for oscilloscope visualization of waveform generation
+ * Uses AnalogOut for voltage output (0.0 to 1.0 normalized range)
+ */
+
+#include "mbed.h"
+
+/* 
+ * Hardware Setup:
+ * AnalogOut DAC connected to pin p18 (requires target with DAC support)
+ * Oscilloscope probe connected to p18 for waveform visualization
+ * Voltage range: 0V to Vref (typically 3.3V), normalized 0.0 to 1.0
+ */
+AnalogOut aout(p18);
+
+/* 
+ * Main loop generates waveforms continuously
+ * Note: Nested loops create square wave followed by sine wave
+ * Square wave: 64 discrete steps (0 to 1V) with 100us hold time each
+ * Sine wave: Continuous phase accumulation with 0.01 radian steps
+ */
+int main()
+{
+    while (true) {
+        // Square wave generation (0→1V ramp, 64 steps)
+        // Each step holds for 100us, creating ~6.4ms period
+        for (int d = 0; d < 64; d++){
+            aout = d/64.;  // Normalized voltage: 0.0 to ~1.0
+            wait_us(100);
+        }
+        
+        // Sine wave generation (oscilloscope-friendly visualization)
+        // Continuous phase accumulation, normalized to 0.0-1.0 range
+        // Missing #include <cmath> for sin() function
+        while(true){
+            static float theta = 0.0;  // Static preserves phase across loops
+            aout = (sin(1 + sin(theta)) / 2.0) + 0.5;  // Normalized to 0-1 range
+            theta += 0.01;
+            wait_us(100);  // Consistent timing with square wave
+        }
+    }
+}
