@@ -1,0 +1,120 @@
+/*
+ * Description:
+ * ADC voltage/resistance measurement program with multiple commented exercises
+ * Active: Exercise 6 - Measures analog input voltage on p20 and calculates resistance
+ * Uses voltage divider formula: R = Vref × Rref / (Vref - Vadc)
+ * Commented: Basic printf exercises + temperature sensor examples
+ */
+
+#include "mbed.h"
+
+/* 
+ * Hardware Setup:
+ * AnalogIn on pin p20 (ADC input, typically 0-3.3V range)
+ * External circuit: Voltage divider with 2kΩ reference resistor (Rref)
+ * Potentiometer/resistor network connected between 3.3V, p20, and GND
+ * Serial terminal required for printf output (USB UART)
+ */
+AnalogIn ain(p20);
+
+/*
+ * Averaging function for ADC noise reduction (100 samples)
+ * Returns calibrated voltage in volts (0.0-3.3V range)
+ * Used in commented Exercise 5 (temperature) and active Exercise 6
+ */
+float averageVoltage()
+{
+    // This goes with exercise 5
+    float sum = 0;
+    for (int i = 0; i < 100; i++){
+        sum = sum + ain.read();
+    }
+    return (sum/100) * 3.3;  // Normalized ADC → actual voltage
+}
+
+/*
+ * EXERCISE 1: Basic printf loop (Hello World)
+int main()
+{
+    while(true){
+        printf("Hello World! \n");
+        wait_us(1000000);
+    }
+}
+*/
+
+/*
+ * EXERCISE 2: Print numbers 1-10 with squares (basic formatting)
+ * Bug fixed: Missing braces around printf, semicolon after for loop
+int main()
+{
+    while(true){
+        for (int i = 1; i <= 10; i++) {
+            printf("i = %2d \n, i squared = %3d \n", i, i*i);
+        }
+        wait_us(1000000);
+    }
+}
+*/
+
+/*
+ * EXERCISE 3: 3-digit padded formatting (%02d, %03d)
+ * Bug fixed: Semicolon removed from for loop, braces added
+int main()
+{
+    while(true){
+        for (int i = 1; i <= 10; i++) {
+            printf("i = %02d \n, i squared = %03d \n", i, i*i);
+        }
+        wait_us(1000000);
+    }
+}
+*/
+
+/*
+ * EXERCISE 4: Floating point printf (requires mbed_serial.json for USB serial)
+int main()
+{
+    while(true){
+        float pi = 3.14159265; 
+        printf("pi = %f \n", pi); 
+        wait_us(1000000);
+    }
+}
+*/
+
+/*
+ * EXERCISE 5: Temperature sensor (future - needs sensor on p20)
+ * Converts ADC voltage to Celsius using 10mV/°C sensitivity
+int main()
+{
+    while(true){
+        float f, volts, degrees; 
+        volts = averageVoltage();
+        f = ain.read();
+        volts = f * 3.3;
+        degrees = volts / 0.01;  // 10mV/°C sensitivity
+        printf(" volts = %f, degrees = %f \n", volts, degrees); 
+        wait_us(1000000);
+    }
+}
+*/
+
+/* 
+ * ACTIVE EXERCISE 6: Voltage + Resistance measurement
+ * Voltage divider: Vout = Vin × R2/(R1+R2), solved for R2 (unknown)
+ * Formula: R_unknown = V_adc × Rref / (Vref - V_adc)
+ * Rref = 2000Ω fixed reference resistor
+ */
+const float Rref = 2000;
+
+int main()
+{
+    while(true){
+        float f, volts, ohms; 
+        volts = averageVoltage();
+        ohms = volts * Rref / (3.3 - volts);
+        printf(" volts = %f, ohms = %f \n", volts, ohms); 
+        wait_us(1000000);
+    }
+}
