@@ -1,0 +1,74 @@
+/*
+ * Description:
+ * Frequency counter using edge detection on digital input p21
+ * Measures input signal frequency (Hz) over 10-second gate time
+ */
+
+#include "mbed.h"
+
+volatile int counter;
+volatile float period,lasttime;
+InterruptIn signal(p21);
+
+void countEdge(void)
+{
+    counter++;
+}
+
+int main()
+{
+    signal.rise(countEdge);
+    while (true) {
+        int freq;
+        counter = 0;
+        wait_us(10000000);
+        freq = counter;
+        printf("%d Hz \n\r",freq);
+    }
+}
+
+/*
+ * EXERCISE: Switch Debouncing + Mode Selection
+ * When switch pressed → Hz counter active, released → 0 Hz display
+ * Uses Timeout for 25ms debouncing windows between edge detection
+ * Dual switches (sw1/sw2) select operational modes via LED indication
+
+Timeout timeout;
+
+void riseFound(void);
+void lookForRise(void)
+{
+    sw.rise(riseFound);
+}
+void fallFound(void)
+{
+    // do anything needed on switch release 
+    sw.fall(NULL);
+    timeout.attach(lookForRise,0.025);
+}
+void lookForFall(void)
+{
+
+}
+void riseFound(void)
+{
+    led =!led;
+    sw.rise(riseFound);
+    timeout.attach(lookForFall,0.025);
+}
+void selectMode0()
+{
+    led = 0;
+}
+void selectMode1()
+{
+    led = 1;
+}
+int main(){
+    sw1.rise(selectMode0);
+    sw2.rise(selectMode1);
+
+    while(true){
+    }
+}
+*/
