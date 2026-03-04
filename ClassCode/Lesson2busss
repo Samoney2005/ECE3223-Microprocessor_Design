@@ -1,0 +1,57 @@
+/*
+ * Description:
+ * Simple 7-segment display counter that cycles through digits 0-3 
+ * on an 8-bit 7-segment display using mbed BusOut interface.
+ */
+
+#include "mbed.h"
+
+/* 
+ * Hardware Setup:
+ * 8-bit BusOut interface connected to 7-segment display segments (a-g + decimal point)
+ * Pins: p5, p6, p7, p8, p9, p10, p11, p12
+ * Assumes common cathode 7-segment display wiring
+ */
+BusOut display(p5, p6, p7, p8, p9, p10, p11, p12);
+
+/* 
+ * Converts digits 0-3 to 7-segment binary patterns
+ * Bit mapping: [dp,g,f,e,d,c,b,a] where dp=decimal point (bit 7)
+ * Returns 0 for unsupported symbols
+ * Patterns:
+ *   0: 0b00111111 (segments a,b,c,d,e,f ON)
+ *   1: 0b00110000 (segments b,c ON - right-aligned)
+ *   2: 0b01011011 (segments a,b,d,e,g ON)
+ *   3: 0b01001111 (segments a,b,c,d,g ON)
+ */
+int segConvert(int symbol)
+{
+    if (symbol == 0) {
+        return 0b00111111;
+    }
+    if (symbol == 1) {
+        return 0b00110000;
+    }
+    if (symbol == 2) {
+        return 0b01011011;
+    }
+    if (symbol == 3) {
+        return 0b01001111;
+    }
+    return 0;
+}
+
+/* 
+ * Main loop continuously cycles through digits 0→1→2→3→0→...
+ * Each digit displays for 500ms (0.5 seconds)
+ * Infinite loop for continuous operation
+ */
+int main()
+{
+    while (true) {
+        for (int i = 0; i <= 3; i++) {
+            display = segConvert(i);
+            wait_us(500000);
+        }
+    }
+}
